@@ -1,0 +1,82 @@
+import pygame
+import random
+
+# Stałe
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+PREDATOR_SIZE = 20
+PREY_SIZE = 10
+
+class Predator:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, RED, (self.x, self.y), PREDATOR_SIZE)
+
+class Prey:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def move(self):
+        self.x += random.randint(-1, 1)
+        self.y += random.randint(-1, 1)
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, BLUE, (self.x, self.y), PREY_SIZE)
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Predator-Prey Simulation")
+    clock = pygame.time.Clock()
+
+    predators = [Predator(random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)) for _ in range(5)]
+    preys = [Prey(random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)) for _ in range(50)]
+
+    running = True
+    while running:
+        screen.fill(WHITE)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            for predator in predators:
+                predator.move(-1, 0)
+        if keys[pygame.K_RIGHT]:
+            for predator in predators:
+                predator.move(1, 0)
+        if keys[pygame.K_UP]:
+            for predator in predators:
+                predator.move(0, -1)
+        if keys[pygame.K_DOWN]:
+            for predator in predators:
+                predator.move(0, 1)
+
+        for prey in preys:
+            prey.move()
+            prey.draw(screen)
+
+        for predator in predators:
+            predator.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
