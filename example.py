@@ -1,38 +1,47 @@
 import simpy
 import random
 
-class World:
+# Parametry początkowe
+INITIAL_PREY_POPULATION = 100
+INITIAL_PREDATOR_POPULATION = 20
+SIMULATION_DURATION = 100
+PREY_REPRODUCTION_RATE = 0.1
+PREDATOR_REPRODUCTION_RATE = 0.05
+PREDATION_RATE = 0.3
+
+# Klasa reprezentująca środowisko
+class Habitat:
     def __init__(self, env):
         self.env = env
-        self.prey_population = 100
-        self.predator_population = 20
-        self.prey = simpy.Resource(env, capacity=self.prey_population)
-        self.predator = simpy.Resource(env, capacity=self.predator_population)
-        self.duration = 50  # Czas trwania symulacji w sekundach
+        self.prey_population = INITIAL_PREY_POPULATION
+        self.predator_population = INITIAL_PREDATOR_POPULATION
 
-def prey_behaviour(env, world):
-    while env.now < world.duration:
+# Proces zachowania ofiar
+def prey_behavior(env, habitat):
+    while True:
+        # Rozmnażanie się ofiar
+        habitat.prey_population += PREY_REPRODUCTION_RATE * habitat.prey_population
         yield env.timeout(1)
-        if random.random() < 0.1:  # Szansa na reprodukcję ofiary
-            world.prey_population += 10
+        print(f"Ofiary: {habitat.prey_population:.2f} w czasie {env.now}")
 
-def predator_behaviour(env, world):
-    while env.now < world.duration:
+# Proces zachowania drapieżników
+def predator_behavior(env, habitat):
+    while True:
+        # Polowanie na ofiary
+        prey_available = min(habitat.prey_population, PREDATION_RATE * habitat.predator_population)
+        prey_consumed = random.uniform(0, prey_available)
+        habitat.prey_population -= prey_consumed
+        habitat.predator_population += PREDATOR_REPRODUCTION_RATE * prey_consumed
         yield env.timeout(1)
-        if random.random() < 0.2:  # Szansa na reprodukcję drapieżnika
-            world.predator_population += 5
-        if random.random() < 0.2 and world.prey_population > 0:  # Szansa na polowanie
-            world.prey_population -= 1
+        print(f"Drapieżniki: {habitat.predator_population:.2f} w czasie {env.now}")
 
-def run_simulation(env, world):
-    prey_process = env.process(prey_behaviour(env, world))
-    predator_process = env.process(predator_behaviour(env, world))
-    yield env.timeout(world.duration)  # Czas trwania symulacji
+# Proces uruchamiający symulację
+def run_simulation():
+    env = simpy.Environment()
+    habitat = Habitat(env)
+    env.process(prey_behavior(env, habitat))
+    env.process(predator_behavior(env, habitat))
+    env.run(until=SIMULATION_DURATION)
 
-env = simpy.Environment()
-world = World(env)
-env.process(run_simulation(env, world))
-env.run()
-
-print("Populacja ofiar:", world.prey_population)
-print("Populacja drapieżników:", world.predator_population)
+if __name__ == "__main__":
+    run_simulation()
